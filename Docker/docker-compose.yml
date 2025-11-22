@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # API Service
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: bookstore-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=main.py
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_ENV=development
+    volumes:
+      - ./api:/app
+    networks:
+      - bookstore-network
+    restart: unless-stopped
+
+  # UI Service
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: bookstore-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - api
+    networks:
+      - bookstore-network
+    restart: unless-stopped
+
+networks:
+  bookstore-network:
+    driver: bridge
+
+volumes:
+  api_data:

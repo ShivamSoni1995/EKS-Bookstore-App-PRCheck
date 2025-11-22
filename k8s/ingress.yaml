@@ -1,0 +1,100 @@
+# NGINX Ingress Configuration for Bookstore Microservices
+# This file defines the ingress routing rules for the bookstore application
+# 
+# Features:
+# - Path-based routing: / → UI, /api/* → API
+# - Host-based routing: Multiple subdomains for service isolation
+# - CORS support for cross-origin requests
+# - Rate limiting for API protection
+# - SSL redirect disabled for development
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookstore-ingress
+  namespace: bookstore
+  annotations:
+    # NGINX Ingress Controller specific annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  ingressClassName: nginx
+  rules:
+  # Main domain routing - Primary access pattern
+  - host: bookstore.local
+    http:
+      paths:
+      # API service - must come first for proper matching
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: bookstore-api-service
+            port:
+              number: 5000
+      
+      # Frontend service - catch-all for the React application
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bookstore-ui-service
+            port:
+              number: 3000
+
+---
+# Service-specific ingress for microservices isolation
+# Demonstrates advanced routing patterns for different services
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookstore-services-ingress
+  namespace: bookstore
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+spec:
+  ingressClassName: nginx
+  rules:
+  # UI-specific subdomain - Direct access to frontend
+  - host: ui.bookstore.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bookstore-ui-service
+            port:
+              number: 3000
+  
+  # API-specific subdomain - Direct access to backend API
+  - host: api.bookstore.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bookstore-api-service
+            port:
+              number: 5000
+        
+  # Backend subdomain - Alternative API access
+  - host: backend.bookstore.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bookstore-api-service
+            port:
+              number: 5000
