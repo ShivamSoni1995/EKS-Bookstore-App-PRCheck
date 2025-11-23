@@ -1,0 +1,5 @@
+🚀 Bookstore Proxy Server running at http://localhost:8090
+📱 Open your browser and visit: http://localhost:8090
+🔗 This will automatically proxy to the ingress with correct headers
+(node:31927) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
